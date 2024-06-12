@@ -19,6 +19,16 @@ def get_input():
     
     return file
     
-
+def extract_chemical_names(fields : dict):
+    chemicals = []
+    for field in fields:
+        if field.startswith("Hazards"):
+            field = field.replace("Hazards", "")
+            chemicals.append(field)
+    return chemicals
 
 file = get_input()
+reader = PdfReader(file)
+fields = reader.get_form_text_fields()
+chemicals = extract_chemical_names(fields)
+print(chemicals)
