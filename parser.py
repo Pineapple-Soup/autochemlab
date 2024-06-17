@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import chemicals.identifiers as CI # type: ignore
+from chemicals import CAS_from_any, MW, Tb, Tm, iapws95_rhol_sat  # type: ignore
 from pypdf import PdfReader # type: ignore
 
 def get_input():
@@ -32,6 +32,9 @@ def parse_locants(c : str):
 file = get_input()
 reader = PdfReader(file)
 fields = reader.get_form_text_fields()
-chemicals = extract_chemical_names(fields)
-chemicals_parsed = [parse_locants(c) for c in chemicals]
-[print(chemical) for chemical in chemicals_parsed]
+chemical_names = extract_chemical_names(fields)
+chemical_names = [parse_locants(c) for c in chemical_names]
+# TODO: Exception Handling
+chemicals = [CAS_from_any(chemical) for chemical in chemical_names]
+chemical_properties = [[MW(CAS), Tb(CAS), Tm(CAS)] for CAS in chemicals]
+[print(name, CAS, props) for name, CAS, props in zip(chemical_names, chemicals, chemical_properties)]
