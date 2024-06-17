@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import chemicals.identifiers as CI # type: ignore
 from pypdf import PdfReader # type: ignore
 
 def get_input():
@@ -27,8 +29,13 @@ def extract_chemical_names(fields : dict):
             chemicals.append(field)
     return chemicals
 
+def parse_locants(c : str):
+    c = re.sub(r'(\d)(\d)', r'\1,\2', c)
+    c = re.sub(r'(\d)([a-zA-Z])', r'\1-\2', c)
+    return c
+
 file = get_input()
 reader = PdfReader(file)
 fields = reader.get_form_text_fields()
 chemicals = extract_chemical_names(fields)
-print(chemicals)
+chemicals_parsed = [parse_locants(c) for c in chemicals]
