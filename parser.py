@@ -22,12 +22,7 @@ def get_input():
     return file
     
 def extract_chemical_names(fields : dict):
-    chemicals = []
-    for field in fields:
-        if field.startswith("Hazards"):
-            field = field.replace("Hazards", "")
-            chemicals.append(field)
-    return chemicals
+    return [field.replace("Hazards", "") for field in fields if field.startswith("Hazards")]
 
 def parse_locants(c : str):
     c = re.sub(r'(\d)(\d)', r'\1,\2', c)
@@ -39,3 +34,4 @@ reader = PdfReader(file)
 fields = reader.get_form_text_fields()
 chemicals = extract_chemical_names(fields)
 chemicals_parsed = [parse_locants(c) for c in chemicals]
+[print(chemical) for chemical in chemicals_parsed]
