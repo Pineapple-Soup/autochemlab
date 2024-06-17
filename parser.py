@@ -36,5 +36,5 @@ chemical_names = extract_chemical_names(fields)
 chemical_names = [parse_locants(c) for c in chemical_names]
 # TODO: Exception Handling
 chemicals = [CAS_from_any(chemical) for chemical in chemical_names]
-chemical_properties = [[MW(CAS), Tb(CAS), Tm(CAS)] for CAS in chemicals]
+chemical_properties = [[MW(CAS), round(Tb(CAS)-273.15, 5), round(Tm(CAS)-273, 5)] for CAS in chemicals]
 [print(name, CAS, props) for name, CAS, props in zip(chemical_names, chemicals, chemical_properties)]
