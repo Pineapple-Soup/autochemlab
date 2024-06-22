@@ -1,7 +1,8 @@
 import os
 import re
+import requests # type: ignore
 import sys
-from chemicals import CAS_from_any, MW, Tb, Tm, iapws95_rhol_sat  # type: ignore
+from chemicals import IDs_to_CASs  # type: ignore
 from pypdf import PdfReader # type: ignore
 
 def get_input():
@@ -29,12 +30,42 @@ def parse_locants(c : str):
     c = re.sub(r'(\d)([a-zA-Z])', r'\1-\2', c)
     return c
 
-file = get_input()
-reader = PdfReader(file)
-fields = reader.get_form_text_fields()
-chemical_names = extract_chemical_names(fields)
-chemical_names = [parse_locants(c) for c in chemical_names]
-# TODO: Exception Handling
-chemicals = [CAS_from_any(chemical) for chemical in chemical_names]
-chemical_properties = [[MW(CAS), round(Tb(CAS)-273.15, 5), round(Tm(CAS)-273, 5)] for CAS in chemicals]
-[print(name, CAS, props) for name, CAS, props in zip(chemical_names, chemicals, chemical_properties)]
+def retrieve_properties(casrn : str):
+    compound_data = {}
+    url = f"https://commonchemistry.cas.org/api/detail?cas_rn={casrn}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        compound_data["Molecular Weight"] = response.json()["molecularMass"]
+        experimental_properties = response.json()["experimentalProperties"]
+        for property in experimental_properties:
+            compound_data[property["name"]] = property["property"]
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from API: {e}")
+        return None
+    except KeyError as e:
+        print(f"KeyError: {e} - Missing expected data in API response.")
+        return None
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return None
+    return compound_data
+
+if __name__ == "__main__":
+    file = get_input()
+    reader = PdfReader(file)
+    fields = reader.get_form_text_fields()
+    chemical_names = [parse_locants(c) for c in extract_chemical_names(fields)]
+    # TODO: Exception Handling
+    chemical_CASRNs = IDs_to_CASs(chemical_names)
+    print(chemical_names)
+    print(chemical_CASRNs)
+    chemical_data = []
+    for name, casrn in zip(chemical_names, chemical_CASRNs):
+        properties = retrieve_properties(casrn)
+        if properties is not None:
+            chemical_data.append({"name" : name , "info" : properties})
+    for chemical in chemical_data:
+        print(f"====={chemical["name"]}=====")
+        for property, value in chemical["info"].items():
+            print(f"{property}: {value}")
