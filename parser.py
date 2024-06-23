@@ -104,7 +104,7 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
         return None
     return compound_data
 
-def generate_fields_from_data(fields_list: list[list[str]], chemical_properties: list[dict[str, str]]) -> dict[str, str]:
+def generate_fields_from_properties(fields_list: list[list[str]], chemical_properties: list[dict[str, str]]) -> dict[str, str]:
     fields = {}
     for key, data in zip(fields_list, chemical_properties):
         if "Molecular Weight" in key[0]:
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             chemical_data.append({"name" : name , "data" : properties})
     fields_list = [field for field in fields if "Molecular Weight" in field or "fill_" in field or "Density" in field]
     fields_list = [fields_list[i:i+3] for i in range(0, len(fields_list), 3)]
-    new_fields = generate_fields_from_data(fields_list, chemical_data)
+    new_fields = generate_fields_from_properties(fields_list, chemical_data)
     print(new_fields)
     # for chemical in chemical_data:
     #     print(f"\n===== {chemical["name"]} =====")
