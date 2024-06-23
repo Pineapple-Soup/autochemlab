@@ -2,6 +2,7 @@ import os
 import re
 import requests # type: ignore
 import sys
+from chemicals import MW, Tb, Tm # type: ignore
 from pypdf import PdfReader # type: ignore
 
 def get_input() -> str:
@@ -21,7 +22,7 @@ def get_input() -> str:
     
     return file
 
-def extract_chemical_names(fields: dict) -> list[str]:
+def extract_chemical_names(fields: list[str]) -> list[str]:
     return [field.replace("Hazards", "") for field in fields if field.startswith("Hazards")]
 
 def parse_locants(compound: str) -> str:
@@ -71,10 +72,27 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
     try:
         response = requests.get(url)
         response.raise_for_status()
-        compound_data["Molecular Weight"] = response.json()["molecularMass"]
+        molecular_weight = response.json()["molecularMass"]
+        if molecular_weight:
+            compound_data["Molecular Weight"] = molecular_weight
+        else:
+            compound_data["Molecular Weight"] = str(MW(casrn))
         experimental_properties = response.json()["experimentalProperties"]
         for property in experimental_properties:
-            compound_data[property["name"]] = property["property"]
+            property_value = re.search(r'[-]?\d*\.?\d+', property["property"]).group()
+            compound_data[property["name"]] = property_value
+        if "Boiling Point" not in compound_data:
+            try:
+                compound_data["Boiling Point"] = str(round(Tb(casrn)-273.15, 3))
+            except TypeError as e:
+                compound_data["Boiling Point"] = None
+        if "Melting Point" not in compound_data:
+            try:
+                compound_data["Melting Point"] = str(round(Tm(casrn)-273.15, 3))
+            except TypeError as e:
+                compound_data["Melting Point"] = None
+        if "Density" not in compound_data:
+            compound_data["Density"] = None
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from API: {e}")
         return None
@@ -89,7 +107,7 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
 if __name__ == "__main__":
     file = get_input()
     reader = PdfReader(file)
-    fields = reader.get_form_text_fields()
+    fields = list(reader.get_form_text_fields())
     chemical_names = [parse_locants(c) for c in extract_chemical_names(fields)]
     chemical_CASRNs = retrieve_all_CASRNs(chemical_names)
     print(chemical_names)
