@@ -2,8 +2,8 @@ import os
 import re
 import requests # type: ignore
 import sys
-from chemicals import MW, Tb, Tm # type: ignore
-from pypdf import PdfReader # type: ignore
+from chemicals import MW, Tm, Tb # type: ignore
+from pypdf import PdfReader, PdfWriter # type: ignore
 
 def get_input() -> str:
     if len(sys.argv) < 2:
@@ -104,20 +104,40 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
         return None
     return compound_data
 
+def generate_fields_from_data(fields_list: list[list[str]], chemical_properties: list[dict[str, str]]) -> dict[str, str]:
+    fields = {}
+    for key, data in zip(fields_list, chemical_properties):
+        if "Molecular Weight" in key[0]:
+            fields[key[0]] = data["data"]["Molecular Weight"]
+        if "fill_" in key[1]:
+            melting_point = data["data"]["Melting Point"]
+            boiling_point = data["data"]["Boiling Point"]
+            if melting_point:
+                fields[key[1]] = melting_point
+            if boiling_point:
+                fields[key[1]] = boiling_point
+        if "Density" in key[2]:
+            fields[key[2]] = data["data"]["Density"]
+    return fields
+
 if __name__ == "__main__":
     file = get_input()
     reader = PdfReader(file)
     fields = list(reader.get_form_text_fields())
     chemical_names = [parse_locants(c) for c in extract_chemical_names(fields)]
     chemical_CASRNs = retrieve_all_CASRNs(chemical_names)
-    print(chemical_names)
-    print(chemical_CASRNs)
+    # print(chemical_names)
+    # print(chemical_CASRNs)
     chemical_data = []
     for name, casrn in zip(chemical_names, chemical_CASRNs):
         properties = retrieve_properties(casrn)
         if properties is not None:
-            chemical_data.append({"name" : name , "info" : properties})
-    for chemical in chemical_data:
-        print(f"\n===== {chemical["name"]} =====")
-        for property, value in chemical["info"].items():
-            print(f"{property}: {value}")
+            chemical_data.append({"name" : name , "data" : properties})
+    fields_list = [field for field in fields if "Molecular Weight" in field or "fill_" in field or "Density" in field]
+    fields_list = [fields_list[i:i+3] for i in range(0, len(fields_list), 3)]
+    new_fields = generate_fields_from_data(fields_list, chemical_data)
+    print(new_fields)
+    # for chemical in chemical_data:
+    #     print(f"\n===== {chemical["name"]} =====")
+    #     for property, value in chemical["data"].items():
+    #             print(f"{property}: {value}")
