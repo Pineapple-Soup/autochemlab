@@ -4,7 +4,7 @@ import requests # type: ignore
 import sys
 from pypdf import PdfReader # type: ignore
 
-def get_input():
+def get_input() -> str:
     if len(sys.argv) < 2:
         print(f"Usage: python3 {sys.argv[0]} filename")
         exit(1)
@@ -21,19 +21,19 @@ def get_input():
     
     return file
 
-def extract_chemical_names(fields : dict):
+def extract_chemical_names(fields: dict) -> list[str]:
     return [field.replace("Hazards", "") for field in fields if field.startswith("Hazards")]
 
-def parse_locants(c : str):
-    c = re.sub(r'(\d)(\d)', r'\1,\2', c)
-    c = re.sub(r'(\d)([a-zA-Z])|([a-zA-Z])(\d)', r'\1\3-\2\4', c)
-    c = re.sub(r'(\d) ([a-zA-Z])', r'\1-\2', c)
+def parse_locants(compound: str) -> str:
+    compound = re.sub(r'(\d)(\d)', r'\1,\2', compound)
+    compound = re.sub(r'(\d)([a-zA-Z])|([a-zA-Z])(\d)', r'\1\3-\2\4', compound)
+    compound = re.sub(r'(\d) ([a-zA-Z])', r'\1-\2', compound)
     # Handle edge cases
-    c = re.sub(r'([a-zA-Z]) (hex+)', r'\1\2', c)
-    c = re.sub("hexanes", "hexane", c)
-    return c
+    compound = re.sub(r'([a-zA-Z]) (hex+)', r'\1\2', compound)
+    compound = re.sub("hexanes", "hexane", compound)
+    return compound
 
-def retrieve_CASRN(chemical):
+def retrieve_CASRN(chemical: str) -> str:
     try:
         url = f"https://commonchemistry.cas.org/api/search?q={chemical}"
         response = requests.get(url)
@@ -46,7 +46,7 @@ def retrieve_CASRN(chemical):
     except ValueError as e:
         return None
 
-def retrieve_all_CASRNs(chemicals):
+def retrieve_all_CASRNs(chemicals: list[str]) -> list[str]:
     casrns = []
     for idx, chemical in enumerate(chemicals):
         retry = 1
@@ -65,7 +65,7 @@ def retrieve_all_CASRNs(chemicals):
                 raise ValueError
     return casrns
 
-def retrieve_properties(casrn : str):
+def retrieve_properties(casrn: str) -> dict[str, str]:
     compound_data = {}
     url = f"https://commonchemistry.cas.org/api/detail?cas_rn={casrn}"
     try:
