@@ -5,7 +5,7 @@ import sys
 from chemicals import MW, Tm, Tb # type: ignore
 from pypdf import PdfReader, PdfWriter # type: ignore
 
-def get_input() -> str:
+def get_input_file() -> str:
     if len(sys.argv) < 2:
         print(f"Usage: python3 {sys.argv[0]} filename")
         exit(1)
@@ -21,6 +21,9 @@ def get_input() -> str:
         exit(1)
     
     return file
+
+def get_names_from_fields(fields: list[str]) -> list[str]:
+    return [parse_locants(c) for c in extract_chemical_names(fields)]
 
 def extract_chemical_names(fields: list[str]) -> list[str]:
     return [field.replace("Hazards", "") for field in fields if field.startswith("Hazards")]
@@ -76,11 +79,11 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
         if molecular_weight:
             compound_data["Molecular Weight"] = molecular_weight
         else:
-            compound_data["Molecular Weight"] = str(MW(casrn))
+            compound_data["Molecular Weight"] = str(round(MW(casrn), 2))
         experimental_properties = response.json()["experimentalProperties"]
         for property in experimental_properties:
             property_value = re.search(r'[-]?\d*\.?\d+', property["property"]).group()
-            compound_data[property["name"]] = property_value
+            compound_data[property["name"]] = str(round(float(property_value), 3))
         if "Boiling Point" not in compound_data:
             try:
                 compound_data["Boiling Point"] = str(round(Tb(casrn)-273.15, 3))
@@ -121,10 +124,10 @@ def generate_fields_from_properties(fields_list: list[list[str]], chemical_prope
     return fields
 
 if __name__ == "__main__":
-    file = get_input()
+    file = get_input_file()
     reader = PdfReader(file)
     fields = list(reader.get_form_text_fields())
-    chemical_names = [parse_locants(c) for c in extract_chemical_names(fields)]
+    chemical_names = get_names_from_fields(fields)
     chemical_CASRNs = retrieve_all_CASRNs(chemical_names)
     # print(chemical_names)
     # print(chemical_CASRNs)
@@ -133,11 +136,21 @@ if __name__ == "__main__":
         properties = retrieve_properties(casrn)
         if properties is not None:
             chemical_data.append({"name" : name , "data" : properties})
-    fields_list = [field for field in fields if "Molecular Weight" in field or "fill_" in field or "Density" in field]
-    fields_list = [fields_list[i:i+3] for i in range(0, len(fields_list), 3)]
-    new_fields = generate_fields_from_properties(fields_list, chemical_data)
-    print(new_fields)
+
     # for chemical in chemical_data:
     #     print(f"\n===== {chemical["name"]} =====")
     #     for property, value in chemical["data"].items():
     #             print(f"{property}: {value}")
+
+    fields_list = [field for field in fields if "Molecular Weight" in field or "fill_" in field or "Density" in field]
+    fields_list = [fields_list[i:i+3] for i in range(0, len(fields_list), 3)]
+    new_fields = generate_fields_from_properties(fields_list, chemical_data)
+    # print(new_fields)
+
+    # writer = PdfWriter()
+    # writer.append(reader)
+    # writer.update_page_form_field_values(writer.pages[0], new_fields, auto_regenerate=False)
+
+    # with open(f"testfile.pdf", "wb") as output_stream:
+    #     writer.write(output_stream)
+    
