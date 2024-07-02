@@ -124,7 +124,19 @@ def retrieve_all_data(chemical_names: list[str], chemical_casrns: list[str]) -> 
             chemical_data.append({"name" : name , "data" : properties})
     return chemical_data
 
-def generate_fields_from_properties(fields_list: list[list[str]], chemical_properties: list[dict[str, str]]) -> dict[str, str]:
+def get_mp_and_bp_designation() -> set[str]:
+    # print("Melting Point Chemicals")
+    # mp_chemicals = get_names_from_user()
+    print("Boiling Point Chemicals")
+    bp_chemicals = get_names_from_user()
+    ret = set()
+    # for mp in mp_chemicals:
+    #     ret[mp] = 0
+    for bp in bp_chemicals:
+        ret.add(bp)
+    return ret
+
+def generate_fields_from_properties(fields_list: list[list[str]], chemical_properties: list[dict[str, str]], chemical_designation: set[str]) -> dict[str, str]:
     fields = {}
     for key, data in zip(fields_list, chemical_properties):
         if "Molecular Weight" in key[0]:
@@ -132,10 +144,11 @@ def generate_fields_from_properties(fields_list: list[list[str]], chemical_prope
         if "fill_" in key[1]:
             melting_point = data["data"]["Melting Point"]
             boiling_point = data["data"]["Boiling Point"]
-            if melting_point:
-                fields[key[1]] = melting_point
-            if boiling_point:
-                fields[key[1]] = boiling_point
+            fields[key[1]] = boiling_point if data["name"] in chemical_designation else melting_point
+            # if data["name"]:
+            #     fields[key[1]] = melting_point
+            # if boiling_point:
+            #     fields[key[1]] = boiling_point
         if "Density" in key[2]:
             fields[key[2]] = data["data"]["Density"]
     return fields
@@ -150,10 +163,10 @@ if __name__ == "__main__":
         # print(chemical_names)
         # print(chemical_CASRNs)
         chemical_data = retrieve_all_data(chemical_names, chemical_CASRNs)
-
+        chemical_designation = get_mp_and_bp_designation()
         fields_list = [field for field in fields if "Molecular Weight" in field or "fill_" in field or "Density" in field]
         fields_list = [fields_list[i:i+3] for i in range(0, len(fields_list), 3)]
-        new_fields = generate_fields_from_properties(fields_list, chemical_data)
+        new_fields = generate_fields_from_properties(fields_list, chemical_data, chemical_designation)
         # print(new_fields)
 
         writer = PdfWriter()
