@@ -1,11 +1,11 @@
 import os
 import re
-import requests # type: ignore
+import requests
 import sys
-from chemicals import MW, Tm, Tb # type: ignore
-from pypdf import PdfReader, PdfWriter # type: ignore
+from chemicals import MW, Tm, Tb
+from pypdf import PdfReader, PdfWriter
 
-def get_input_file() -> str:
+def get_input_file() -> str | None:
     if len(sys.argv) > 2:
         print(f"Usage: python3 {sys.argv[0]} | python3 {sys.argv[0]} filename")
         exit(1)
@@ -45,7 +45,7 @@ def parse_locants(compound: str) -> str:
     compound = re.sub("hexanes", "hexane", compound)
     return compound
 
-def retrieve_CASRN(chemical: str) -> str:
+def retrieve_CASRN(chemical: str) -> str | None:
     try:
         url = f"https://commonchemistry.cas.org/api/search?q={chemical}"
         response = requests.get(url)
@@ -56,7 +56,7 @@ def retrieve_CASRN(chemical: str) -> str:
         else:
             raise ValueError
     except ValueError as e:
-        return None
+        print(f"Could not find CASRN for {chemical} with exception: {e}")
 
 def retrieve_all_CASRNs(chemicals: list[str]) -> list[str]:
     casrns = []
@@ -75,7 +75,8 @@ def retrieve_all_CASRNs(chemicals: list[str]) -> list[str]:
             else:
                 # Option 2: Prompt user for correct chemical name
                 print(f"Failed at {chemical}")
-                raise ValueError
+                retry -= 1
+                # raise ValueError
     return casrns
 
 def retrieve_properties(casrn: str) -> dict[str, str]:
@@ -91,32 +92,29 @@ def retrieve_properties(casrn: str) -> dict[str, str]:
             compound_data["Molecular Weight"] = str(round(MW(casrn), 2))
         experimental_properties = response.json()["experimentalProperties"]
         for property in experimental_properties:
-            property_value = re.search(r'[-]?\d*\.?\d+', property["property"]).group()
+            property_value = re.search(r'[-]?\d*\.?\d+', property["property"]).group() # type: ignore
             compound_data[property["name"]] = str(round(float(property_value), 3))
         if "Boiling Point" not in compound_data:
             try:
-                compound_data["Boiling Point"] = str(round(Tb(casrn)-273.15, 3))
+                compound_data["Boiling Point"] = str(round(Tb(casrn)-273.15, 3)) # type: ignore
             except TypeError as e:
                 compound_data["Boiling Point"] = None
         if "Melting Point" not in compound_data:
             try:
-                compound_data["Melting Point"] = str(round(Tm(casrn)-273.15, 3))
+                compound_data["Melting Point"] = str(round(Tm(casrn)-273.15, 3)) # type: ignore
             except TypeError as e:
                 compound_data["Melting Point"] = None
         if "Density" not in compound_data:
             compound_data["Density"] = None
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from API: {e}")
-        return None
     except KeyError as e:
         print(f"KeyError: {e} - Missing expected data in API response.")
-        return None
     except Exception as e:
         print(f"Unexpected Error: {e}")
-        return None
     return compound_data
 
-def retrieve_all_data(chemical_names: list[str], chemical_casrns: list[str]) -> list[dict[str, str]]:
+def retrieve_all_data(chemical_names: list[str], chemical_casrns: list[str]) -> list[dict]:
     chemical_data = []
     for name, casrn in zip(chemical_names, chemical_casrns):
         properties = retrieve_properties(casrn)
@@ -125,18 +123,14 @@ def retrieve_all_data(chemical_names: list[str], chemical_casrns: list[str]) -> 
     return chemical_data
 
 def get_mp_and_bp_designation() -> set[str]:
-    # print("Melting Point Chemicals")
-    # mp_chemicals = get_names_from_user()
     print("Boiling Point Chemicals")
     bp_chemicals = get_names_from_user()
     ret = set()
-    # for mp in mp_chemicals:
-    #     ret[mp] = 0
-    for bp in bp_chemicals:
-        ret.add(bp)
+    for boiling_point in bp_chemicals:
+        ret.add(boiling_point)
     return ret
 
-def generate_fields_from_properties(fields_list: list[list[str]], chemical_properties: list[dict[str, str]], chemical_designation: set[str]) -> dict[str, str]:
+def generate_fields_from_properties(fields_list: list[list], chemical_properties: list[dict], chemical_designation: set[str]) -> dict[str, str]:
     fields = {}
     for key, data in zip(fields_list, chemical_properties):
         if "Molecular Weight" in key[0]:
@@ -145,10 +139,6 @@ def generate_fields_from_properties(fields_list: list[list[str]], chemical_prope
             melting_point = data["data"]["Melting Point"]
             boiling_point = data["data"]["Boiling Point"]
             fields[key[1]] = boiling_point if data["name"] in chemical_designation else melting_point
-            # if data["name"]:
-            #     fields[key[1]] = melting_point
-            # if boiling_point:
-            #     fields[key[1]] = boiling_point
         if "Density" in key[2]:
             fields[key[2]] = data["data"]["Density"]
     return fields
