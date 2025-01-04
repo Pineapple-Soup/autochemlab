@@ -1,2 +1,2 @@
-# Autolab
-A tool to fill out reagent tables for Organic Chemistry Labs at UCR
+# AutoChemLab
+A tool to automatically fill out reagent tables from Organic Chemistry Labs at UCR
