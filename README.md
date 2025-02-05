@@ -23,26 +23,6 @@ To install the required dependencies, run the following command:
 pip install -r requirements.txt
 ```
 
-## Dependencies
-
-The project relies on the following Python libraries:
-
-- certifi==2024.6.2
-- charset-normalizer==3.3.2
-- chemicals==1.1.5
-- fluids==1.0.25
-- idna==3.7
-- numpy==1.26.4
-- pandas==2.2.2
-- pypdf==4.2.0
-- python-dateutil==2.9.0.post0
-- pytz==2024.1
-- requests==2.32.3
-- scipy==1.13.1
-- six==1.16.0
-- tzdata==2024.1
-- urllib3==2.2.2
-
 ## Usage
 
 To use AutoChemLab, run the script with a PDF file as an argument:
