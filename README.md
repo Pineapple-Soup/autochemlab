@@ -1,6 +1,6 @@
 # AutoChemLab
 
-A CLI tool to automatically fill out UCR's Organic Chemistry Prelabs.
+A CLI tool to automatically fill out UCR's Organic Chemistry Reagent Tables.
 
 ## Description
 
