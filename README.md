@@ -32,9 +32,8 @@ Run the script with a Reagents & Hazards PDF file as an argument:
 python3 main.py <filename.pdf>
 ```
 
-If no filename is provided, the script will prompt you to enter the names of the chemicals manually.
-
-### Example
+### No PDF
+Run the script:
 
 ```shell
 python3 main.py prelab.pdf
