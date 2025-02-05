@@ -11,6 +11,7 @@ AutoChemLab is designed to streamline the process of filling out reagent tables 
 - Automatic extraction of chemical names from PDF fields
 - Retrieval of CAS registry numbers (CASRNs) for chemicals
 - Fetching molecular weights, boiling points, melting points, and densities from an online database
+- Selection of using boiling point or melting point data for individual chemicals
 - CLI interface for manual input and processing of chemical data
 - PDF form autofilling with chemical properties
 
