@@ -4,7 +4,7 @@ A CLI tool to automatically fill out UCR's Organic Chemistry Reagent Tables.
 
 ## Description
 
-AutoChemLab is designed to streamline the process of filling out reagent tables for organic chemistry labs at the University of California, Riverside. It supports both CLI interactions and PDF autofilling, making it easier for students and researchers to manage their lab documentation.
+AutoChemLab is designed to streamline the process of filling out reagent tables for organic chemistry labs at the University of California, Riverside. It supports both CLI interactions and PDF autofilling, making it easier for students to manage their lab assignments.
 
 ## Features
 
