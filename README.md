@@ -25,7 +25,8 @@ pip install -r requirements.txt
 
 ## Usage
 
-To use AutoChemLab, run the script with a PDF file as an argument:
+### PDF
+Run the script with a Reagents & Hazards PDF file as an argument:
 
 ```shell
 python3 main.py <filename.pdf>
