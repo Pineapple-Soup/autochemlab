@@ -36,5 +36,5 @@ python3 main.py <filename.pdf>
 Run the script:
 
 ```shell
-python3 main.py prelab.pdf
+python3 main.py
 ```
